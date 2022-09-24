@@ -1,20 +1,16 @@
 package utils
 
 import (
-	"bufio"
 	"bytes"
 	"crypto/md5"
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io"
 	"math/rand"
 	"os"
-	"strings"
-	"sync"
 	"time"
 
 	"github.com/ck00004/CobaltStrikeParser-Go/lib/http"
@@ -26,75 +22,7 @@ var TypeStr = 3
 
 var SupportedVersions = []int{3, 4}
 
-var u = flag.String("u", "", "This can be a url (if started with http/s)")
-var f = flag.String("f", "", "This can be a file path (if started with http/s)")
-var o = flag.String("o", "", "out file")
-var t = flag.Int("t", 30, "timeouts. default:20")
-var br = flag.Int("br", 1, "thread,import file valid. default:1")
-
-func GetPublicKey(s string) string {
-	if *f != "" {
-		var wg sync.WaitGroup
-		var ChanUrlList chan string
-		var num = 0
-		var mutex sync.Mutex
-		var urllist []string
-		filepath := *f
-		file, err := os.OpenFile(filepath, os.O_RDWR, 0666)
-		if err != nil {
-			fmt.Println("Open file error!", err)
-			return ""
-		}
-		defer file.Close()
-
-		buf := bufio.NewReader(file)
-		for {
-			line, err := buf.ReadString('\n')
-			line = strings.TrimSpace(line)
-			if line != "" {
-				urllist = append(urllist, line)
-			}
-			if err != nil {
-				if err == io.EOF {
-					break
-				} else {
-					return ""
-				}
-			}
-		}
-		ChanUrlList = make(chan string, len(urllist))
-		for filelen := 0; filelen < len(urllist); filelen++ {
-			ChanUrlList <- urllist[filelen]
-		}
-		for i := 0; i < *br; i++ {
-			wg.Add(1)
-			go BeaconInitThread(&wg, &num, &mutex, ChanUrlList, *o)
-		}
-
-		close(ChanUrlList)
-		wg.Wait()
-	} else {
-		return beaconinit(s)
-	}
-	return ""
-}
-
-func BeaconInitThread(wg *sync.WaitGroup, num *int, mutex *sync.Mutex, ChanUrlList chan string, filename string) {
-	defer wg.Done()
-	for one := range ChanUrlList {
-		go incrNum(num, mutex)
-		host := one
-		beaconinit(host)
-	}
-}
-
-func incrNum(num *int, mutex *sync.Mutex) {
-	mutex.Lock()
-	*num = *num + 1
-	mutex.Unlock()
-}
-
-func beaconinit(host string) string {
+func Beaconinit(host string) string {
 	var resp_x64 *http.Response
 	var err_x64 error
 	var resp *http.Response
@@ -103,22 +31,22 @@ func beaconinit(host string) string {
 	var stager_err error
 	var stager64 *http.Response
 	var stager_err_x64 error
-	var is_x86 bool = true
-	var is_x64 bool = true
-	var is_stager_x86 bool = true
-	var is_stager_x64 bool = true
+	var is_x86 = true
+	var is_x64 = true
+	var is_stager_x86 = true
+	var is_stager_x64 = true
 	var buf []byte
-	var tr *http.Transport = &http.Transport{
+	var tr = &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
-	var client *http.Client = &http.Client{
-		Timeout:   time.Duration(*t) * time.Second,
+	var client = &http.Client{
+		Timeout:   time.Duration(30) * time.Second,
 		Transport: tr,
 	}
-	var host_x86 string = host + "/" + MSFURI()
-	var host_x64 string = host + "/" + MSFURI_X64()
-	var stager_x86 string = host + "/" + "stager"
-	var stager_x64 string = host + "/" + "stager64"
+	var host_x86 = host + "/" + MSFURI()
+	var host_x64 = host + "/" + MSFURI_X64()
+	var stager_x86 = host + "/" + "stager"
+	var stager_x64 = host + "/" + "stager64"
 	resp, err = client.Get(host_x86)
 	resp_x64, err_x64 = client.Get(host_x64)
 	stager, stager_err = client.Get1(stager_x86, 1)
@@ -126,67 +54,15 @@ func beaconinit(host string) string {
 
 	if err != nil || resp.StatusCode != 200 {
 		is_x86 = false
-		//if filename == "" {
-		//	fmt.Println("error:", err, "beacon stager x86 not found")
-		//} else {
-		//	fmt.Println("error:", err, "beacon stager x86 not found")
-		//	bodyMap["URL"] = host
-		//	if err != nil {
-		//		bodyMap["error"] = err.Error() + "beacon stager x86 not found"
-		//	} else {
-		//		bodyMap["error"] = "beacon stager x86 not found"
-		//	}
-		//	var bodyerror string = MapToJson(bodyMap)
-		//	JsonFileWrite(filename, bodyerror)
-		//}
 	}
 	if err_x64 != nil || resp_x64.StatusCode != 200 {
 		is_x64 = false
-		//if filename == "" {
-		//	fmt.Println("error:", err_x64, "beacon stager x64 not found")
-		//} else {
-		//	fmt.Println("error", err_x64, "beacon stager x64 not found")
-		//	bodyMap["URL"] = host
-		//	if err_x64 != nil {
-		//		bodyMap["error"] = err_x64.Error() + "beacon stager x64 not found"
-		//	} else {
-		//		bodyMap["error"] = "beacon stager x64 not found"
-		//	}
-		//	var bodyerror string = MapToJson(bodyMap)
-		//	JsonFileWrite(filename, bodyerror)
-		//}
 	}
 	if stager_err != nil || stager.StatusCode != 200 {
 		is_stager_x64 = false
-		//if filename == "" {
-		//	fmt.Println("error:", stager_err, "beacon stager x64 not found")
-		//} else {
-		//	fmt.Println("error", stager_err, "beacon stager x64 not found")
-		//	bodyMap["URL"] = host
-		//	if stager_err != nil {
-		//		bodyMap["error"] = stager_err.Error() + "beacon stager x64 not found"
-		//	} else {
-		//		bodyMap["error"] = "beacon stager x64 not found"
-		//	}
-		//	var bodyerror string = MapToJson(bodyMap)
-		//	JsonFileWrite(filename, bodyerror)
-		//}
 	}
 	if stager_err_x64 != nil || stager64.StatusCode != 200 {
 		is_stager_x64 = false
-		//if filename == "" {
-		//	fmt.Println("error:", stager_err_x64, "beacon stager x64 not found")
-		//} else {
-		//	fmt.Println("error", stager_err_x64, "beacon stager x64 not found")
-		//	bodyMap["URL"] = host
-		//	if stager_err_x64 != nil {
-		//		bodyMap["error"] = stager_err_x64.Error() + "beacon stager x64 not found"
-		//	} else {
-		//		bodyMap["error"] = "beacon stager x64 not found"
-		//	}
-		//	var bodyerror string = MapToJson(bodyMap)
-		//	JsonFileWrite(filename, bodyerror)
-		//}
 	}
 	var body []byte
 	if is_x86 != false {
