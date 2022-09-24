@@ -1,4 +1,4 @@
-module CSRCE
+module CSPOC
 
 go 1.19
 
