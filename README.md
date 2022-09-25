@@ -1,8 +1,8 @@
-# Cobalt Strike RCE CVE-2022-39197
+# Cobalt Strike 存储型XSS RCE CVE-2022-39197
 
 ### 运行参数：
 
-> ### -u: Cobaltstrike http监听的地址，如 http://127.0.01:8500
+> ### -u: Cobaltstrike http监听的地址，如 http://127.0.0.1:8500
 >
 >### -p: Payload，如 `<html><img src=http://127.0.0.1/log.png>` 不宜过长
 >
